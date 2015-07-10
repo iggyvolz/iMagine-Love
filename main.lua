@@ -1,5 +1,6 @@
 local command=""
 local response="Welcome to iMagine development!\nFor help and credits, type help then press enter."
+love.filesystem.write("response",response)
 local utf8 = require("utf8")
 local smallfont=love.graphics.newFont(16)
 local bigfont=love.graphics.newFont(30)
@@ -7,7 +8,13 @@ local http = require("socket.http")
 local json = require("json")
 love.math.setRandomSeed(os.time())
 love.math.random()
-local uid = love.math.random(10000000)
+local uid
+if love.filesystem.read("uid") then
+  uid=love.filesystem.read("uid")
+else
+  uid = love.math.random(10000000)
+  love.filesystem.write("uid",uid)
+end
 function love.load()
   love.keyboard.setKeyRepeat(true)
 end
@@ -28,10 +35,19 @@ function love.keypressed(key)
       love.system.openURL("http://iggyvolz.github.io/iMagine/help.html")
       return
     end
+    if command=="reset" then
+      response="Welcome to iMagine development!\nFor help and credits, type help then press enter."
+      love.filesystem.write("response",response)
+      uid = love.math.random(10000000)
+      love.filesystem.write("uid",uid)
+      return
+    end
+    response=response.."\n>"..command
     local a,b=http.request("http://i.magine.tk/head.php?command="..command.."&uid="..uid)
     if a then
       local f=json:decode(a)
-      response=f.response
+      response=response.."\n"..f.response
+      love.filesystem.write("response",response)
     else
       print(b)
     end
